@@ -6,25 +6,28 @@
     // Load JDBC driver
     Class.forName("net.sourceforge.jtds.jdbc.Driver");
 
-    // Establish connection to the database
-    Connection conn = DriverManager.getConnection("jdbc:jtds:sqlserver://localhost:1433/jsf-pmu", "sa", "p@ssw0rd");
+    Connection conn = null;
+    try {
+        // Establish connection to the database
+        conn = DriverManager.getConnection("jdbc:jtds:sqlserver://localhost:1433/jsf-pmu", "sa", "p@ssw0rd");
 
-    // Delete operation
-    String deleteStaffID = request.getParameter("deleteStaffID");
-    if (deleteStaffID != null) {
-        String deleteQuery = "DELETE FROM SportRoomBooking WHERE StaffID = ?";
-        PreparedStatement psDelete = conn.prepareStatement(deleteQuery);
-        psDelete.setInt(1, Integer.parseInt(deleteStaffID));
-        psDelete.executeUpdate();
-        psDelete.close();
-    }
+        // Delete operation
+        String deleteStaffID = request.getParameter("deleteStaffID");
+        if (deleteStaffID != null) {
+            String deleteQuery = "DELETE FROM SportRoomBooking WHERE StaffID = ?";
+            PreparedStatement psDelete = conn.prepareStatement(deleteQuery);
+            psDelete.setString(1, deleteStaffID);
+            int rowsAffected = psDelete.executeUpdate(); // Get the number of rows affected
+            psDelete.close();
+            out.println(rowsAffected + " record(s) deleted."); // Debugging output
+        }
 
-    // SQL query to select data from SportRoomBooking
-    String selectQuery = "SELECT StaffFullName, StaffID FROM SportRoomBooking";
-    PreparedStatement psSelect = conn.prepareStatement(selectQuery);
+        // SQL query to select data from SportRoomBooking
+        String selectQuery = "SELECT StaffFullName, StaffID FROM SportRoomBooking";
+        PreparedStatement psSelect = conn.prepareStatement(selectQuery);
 
-    // Execute the query
-    ResultSet rs = psSelect.executeQuery();
+        // Execute the query
+        ResultSet rs = psSelect.executeQuery();
 %>
 <html>
 <head>
@@ -53,7 +56,7 @@
                 <td><%= sID %></td>
                 <td>
                     <!-- Delete Button -->
-                    <form method="post" action="viewSportRoomBookings.jsp" style="display:inline;">
+                    <form method="post" action="book-ing.jsp" style="display:inline;">
                         <input type="hidden" name="deleteStaffID" value="<%= sID %>">
                         <button type="submit">Delete</button>
                     </form>
@@ -71,12 +74,17 @@
     </table>
 
     <%
-    // Close the ResultSet and PreparedStatement
-    rs.close();
-    psSelect.close();
-    
-    // Close the connection
-    conn.close();
+        // Close the ResultSet and PreparedStatement
+        rs.close();
+        psSelect.close();
+    } catch (SQLException e) {
+        out.println("Error: " + e.getMessage()); // Print any SQL errors
+    } finally {
+        // Close the connection if it's not null
+        if (conn != null) {
+            conn.close();
+        }
+    }
     %>
 </body>
 </html>
